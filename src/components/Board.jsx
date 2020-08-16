@@ -23,13 +23,19 @@ function reducer(state, action) {
     case 'setTopScore':
       return { ...state, topScore: action.payload };
     case 'setUserClicks':
-      return { ...state, userClicks: action.payload };
+      return {
+        ...state,
+        userClicks: action.payload,
+        player: USER,
+      };
     case 'setSimonClicks':
-      return { ...state, simonClicks: action.payload };
+      return {
+        ...state,
+        simonClicks: action.payload,
+        player: SIMON,
+      };
     case 'reset':
       return { ...state, player: FAILURE, userClicks: 0, simonClicks: [] }; //TODO initialState (init) funciton with TopScore/FAILURE as param?
-    case 'setPlayer':
-      return { ...state, player: action.payload };
     default:
       console.log('Undefined action:', JSON.stringify(action));
       throw new Error('Undefined action');
@@ -58,7 +64,6 @@ function Board() {
         if (i >= state.simonClicks.length) {
           clearInterval(intervalId);
           setTimeout(() => {
-            dispatch({ type: 'setPlayer', payload: USER }); // TODO: merge the two?
             dispatch({ type: 'setUserClicks', payload: 0 });
           }, timerChangePlayerTurn);
         }
@@ -67,7 +72,6 @@ function Board() {
   }, [state.simonClicks]);
 
   function simonSays() {
-    dispatch({ type: 'setPlayer', payload: SIMON });
     const next = Math.floor(Math.random() * 4 + 1);
     dispatch({ type: 'setSimonClicks', payload: state.simonClicks.concat(next) });
   }
@@ -113,7 +117,7 @@ function Board() {
   return (
     <>
       <div className="Board">
-        {[1, 2, 3, 4].map(id => (
+        {[1, 2, 3, 4].map((id) => (
           <Button
             key={id + clicked + state.player}
             type={id}
