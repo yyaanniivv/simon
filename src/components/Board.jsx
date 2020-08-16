@@ -16,16 +16,16 @@ const timer = 200;
 const timerSimon = 450;
 const timerChangePlayerTurn = 600;
 
-const initialState = { topScore: 0, player: SIMON, userClicks: 0, simonClicks: [] };
+const initialState = { topScore: 0, player: SIMON, userScore: 0, simonClicks: [] };
 
 function reducer(state, action) {
   switch (action.type) {
     case 'setTopScore':
       return { ...state, topScore: action.payload };
-    case 'setUserClicks':
+    case 'setUserScore':
       return {
         ...state,
-        userClicks: action.payload,
+        userScore: action.payload,
         player: USER,
       };
     case 'setSimonClicks':
@@ -35,7 +35,7 @@ function reducer(state, action) {
         player: SIMON,
       };
     case 'reset':
-      return { ...state, player: FAILURE, userClicks: 0, simonClicks: [] }; //TODO initialState (init) funciton with TopScore/FAILURE as param?
+      return { ...state, player: FAILURE, userScore: 0, simonClicks: [] }; //TODO initialState (init) funciton with TopScore/FAILURE as param?
     default:
       console.log('Undefined action:', JSON.stringify(action));
       throw new Error('Undefined action');
@@ -64,7 +64,7 @@ function Board() {
         if (i >= state.simonClicks.length) {
           clearInterval(intervalId);
           setTimeout(() => {
-            dispatch({ type: 'setUserClicks', payload: 0 });
+            dispatch({ type: 'setUserScore', payload: 0 });
           }, timerChangePlayerTurn);
         }
       }, timerSimon);
@@ -79,12 +79,12 @@ function Board() {
   function userSays(index) {
     setClicked(index);
 
-    if (index !== state.simonClicks[state.userClicks]) {
+    if (index !== state.simonClicks[state.userScore]) {
       reset();
     } else {
-      dispatch({ type: 'setUserClicks', payload: state.userClicks + 1 });
+      dispatch({ type: 'setUserScore', payload: state.userScore + 1 });
 
-      if (state.userClicks + 1 === state.simonClicks.length) {
+      if (state.userScore + 1 === state.simonClicks.length) {
         setTimeout(() => {
           simonSays();
         }, timerChangePlayerTurn);
