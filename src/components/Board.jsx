@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useReducer } from 'react';
-// import cn from 'classnames';
+import cn from 'classnames';
 
 import Button from './Button';
 import sound1 from './sounds/simonSound1.mp3';
@@ -10,6 +10,17 @@ import sound4 from './sounds/simonSound4.mp3';
 const USER = 'user';
 const SIMON = 'simon';
 const FAILURE = 'failure';
+
+const SOUND_PREF_KEY = 'simon:soundOn';
+
+// Sound starts OFF (muted); the user opts in and the choice is remembered.
+function readSoundPref() {
+  try {
+    return window.localStorage.getItem(SOUND_PREF_KEY) === 'true';
+  } catch {
+    return false; // localStorage unavailable (e.g. private browsing)
+  }
+}
 
 // The sounds are not the same length - so we need to support the longest sound (4/blue)
 const timer = 200;
@@ -45,7 +56,7 @@ function reducer(state, action) {
 function Board() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [clicked, setClicked] = useState(0);
-  const [mute, setMute] = useState(true);
+  const [soundOn, setSoundOn] = useState(readSoundPref);
 
   // Using a named function, to add some context and better explain which effect this is.
   useEffect(deselectButton);
@@ -93,17 +104,28 @@ function Board() {
   }
 
   function playSound(type) {
-    // const playPromise = document.getElementById(`simon${type}`).play();
-    // playPromise.then().catch();
-
-    // OR sound = new Audio(mp3).play()
-    if (!mute) {
-      document.getElementById(`simon${type}`).play();
+    // type 0 means "nothing clicked" - the deselect effect runs with it on every render
+    if (!soundOn || !type) {
+      return;
+    }
+    const audio = document.getElementById(`simon${type}`);
+    if (!audio) {
+      return;
+    }
+    const played = audio.play();
+    if (played && typeof played.catch === 'function') {
+      played.catch(() => {}); // ignore interrupted/blocked plays
     }
   }
 
-  function toggleMute() {
-    return setMute(!mute);
+  function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(next);
+    try {
+      window.localStorage.setItem(SOUND_PREF_KEY, String(next));
+    } catch {
+      // ignore write failures (e.g. private browsing) - sound still toggles in-session
+    }
   }
 
   function reset() {
@@ -136,7 +158,20 @@ function Board() {
           Turn: <div className={`${state.player}-icon`} />
         </div>
         <div className="sound">
-          {/* <div className={cn({mute: mute, speaker: !mute,})} onClick={() => toggleMute()} /> */}
+          <div
+            className={cn({ mute: !soundOn, speaker: soundOn })}
+            onClick={toggleSound}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSound();
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-pressed={soundOn}
+            aria-label="Toggle sound"
+          />
           <audio id="simon1">
             <source src={sound1} type="audio/mpeg" />
           </audio>
