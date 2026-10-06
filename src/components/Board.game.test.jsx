@@ -8,12 +8,19 @@ import Board, {
   timerSimon,
   timerChangePlayerTurn,
 } from './Board';
+import { playSound } from './audio';
+
+vi.mock('./audio', () => ({
+  initSounds: vi.fn(() => Promise.resolve()),
+  playSound: vi.fn(() => ({ node: 'mock-source' })),
+  stopSound: vi.fn(),
+}));
 
 const CLICKED_CLASSES = '.red-clicked, .yellow-clicked, .green-clicked, .blue-clicked';
 
 beforeEach(() => {
   localStorage.clear();
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());
+  vi.clearAllMocks();
 });
 
 afterEach(() => {
@@ -79,12 +86,14 @@ describe('Board (gameplay)', () => {
     await user.click(screen.getByRole('button', { name: 'Toggle sound' }));
     await user.click(document.querySelector('.button.red'));
 
-    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    expect(playSound).toHaveBeenCalledTimes(1);
+    expect(playSound).toHaveBeenCalledWith(1);
   });
 
   it('simon plays the first move after start', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0); // every move is button 1 (red)
+    localStorage.setItem('simon:soundOn', 'true');
     render(<Board />);
 
     // fireEvent (not userEvent) - it is synchronous, so fake timers stay in full control
@@ -95,6 +104,8 @@ describe('Board (gameplay)', () => {
     });
     expect(document.querySelectorAll(CLICKED_CLASSES)).toHaveLength(1);
     expect(document.querySelector('.red-clicked')).not.toBeNull();
+    // the sound starts on the tick itself - no render/effect round-trip
+    expect(playSound).toHaveBeenCalledWith(1);
   });
 
   it('plays a full round: simon shows a move, the user repeats it, score advances', async () => {
@@ -117,8 +128,11 @@ describe('Board (gameplay)', () => {
     });
     expect(document.querySelector('.user-icon')).not.toBeNull();
 
-    // The user repeats the move
-    fireEvent.click(document.querySelector('.button.red'));
+    // The user repeats the move (press & release). Grab the element first -
+    // the press itself swaps the class to `red-clicked`.
+    const red = document.querySelector('.button.red');
+    fireEvent.pointerDown(red);
+    fireEvent.pointerUp(red);
 
     // Sequence complete - simon grows the sequence after the pause, score shows 1
     await act(async () => {

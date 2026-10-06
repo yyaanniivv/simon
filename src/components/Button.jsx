@@ -23,14 +23,24 @@ const typeMap = {
   },
 };
 
-function Button({ type, onClick, clicked }) {
+function Button({ type, onPressStart, onPressEnd, clicked }) {
   const style = cn('button', {
     [`${typeMap[type].position}`]: true,
     [`${typeMap[type].color}`]: !clicked,
     [`${typeMap[type].color}-clicked`]: clicked,
   });
 
-  return <div className={style} onClick={event => onClick()} />;
+  // Pointer events (not click): the sound must start on press-down and stop
+  // on release. pointerleave/cancel cover dragging off the button mid-press.
+  return (
+    <div
+      className={style}
+      onPointerDown={onPressStart}
+      onPointerUp={onPressEnd}
+      onPointerLeave={onPressEnd}
+      onPointerCancel={onPressEnd}
+    />
+  );
 }
 
 export default Button;

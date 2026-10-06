@@ -2,10 +2,11 @@ import React, { useState, useEffect, useReducer, useRef } from 'react';
 import cn from 'classnames';
 
 import Button from './Button';
-import sound1 from './sounds/simonSound1.mp3';
-import sound2 from './sounds/simonSound2.mp3';
-import sound3 from './sounds/simonSound3.mp3';
-import sound4 from './sounds/simonSound4.mp3';
+import { initSounds, playSound as startSound, stopSound } from './audio';
+import sound1 from './sounds/simonSound1.wav';
+import sound2 from './sounds/simonSound2.wav';
+import sound3 from './sounds/simonSound3.wav';
+import sound4 from './sounds/simonSound4.wav';
 
 const USER = 'user';
 const SIMON = 'simon';
@@ -24,7 +25,7 @@ function readSoundPref() {
   }
 }
 
-// The sounds are not the same length - so we need to support the longest sound (4/blue)
+// Simon's playback window must cover the longest sound (~300ms after trimming silence)
 const timer = 200;
 const timerSimon = 450;
 const timerChangePlayerTurn = 600;
@@ -78,30 +79,26 @@ function Board() {
   const [clicked, setClicked] = useState(0);
   const [soundOn, setSoundOn] = useState(readSoundPref);
 
-  const audioRefs = useRef({});
-  // Lets the click effect read the latest soundOn without re-running (and replaying
-  // the sound) when the toggle changes mid-highlight.
+  // The sound node started by the current press, so release can stop it.
+  const userSourceRef = useRef(null);
+  // Lets event handlers and effects read the latest soundOn synchronously.
   const soundOnRef = useRef(soundOn);
   soundOnRef.current = soundOn;
 
-  function playSound(type) {
-    // type 0 means "nothing clicked"
-    const audio = audioRefs.current[type];
-    if (!soundOnRef.current || !type || !audio) {
-      return;
-    }
-    const played = audio.play();
-    if (played && typeof played.catch === 'function') {
-      played.catch(() => {}); // ignore interrupted/blocked plays
-    }
-  }
+  // Decode all sounds once, up front, so playback later is instant.
+  useEffect(() => {
+    initSounds(sounds);
+  }, []);
 
-  // Highlight the clicked button (with sound), then deselect it after a beat.
+  // Stop a held sound if the component unmounts mid-press.
+  useEffect(() => () => stopSound(userSourceRef.current), []);
+
+  // Highlight the clicked button, then deselect it after a beat.
+  // (Sound is NOT played here - it starts synchronously in the press handler.)
   useEffect(() => {
     if (!clicked) {
       return;
     }
-    playSound(clicked);
     const timeoutId = setTimeout(() => setClicked(0), timer);
     return () => clearTimeout(timeoutId);
   }, [clicked]);
@@ -114,7 +111,11 @@ function Board() {
     let i = 0;
     let timeoutId;
     const intervalId = setInterval(() => {
-      setClicked(state.simonClicks[i]);
+      const move = state.simonClicks[i];
+      setClicked(move);
+      if (soundOnRef.current) {
+        startSound(move); // Simon's sounds play in full - no stop
+      }
       i++;
       if (i >= state.simonClicks.length) {
         clearInterval(intervalId);
@@ -154,9 +155,20 @@ function Board() {
     });
   }
 
-  function userSays(index) {
+  // Press: the sound starts synchronously with the pointer event - no React
+  // render/effect round-trip, no decode delay - so it is heard the instant
+  // the button goes down, even while a previous sound is still playing.
+  function userPress(index) {
     setClicked(index);
     dispatch({ type: 'userClick', payload: { index } });
+    stopSound(userSourceRef.current);
+    userSourceRef.current = soundOnRef.current ? startSound(index) : null;
+  }
+
+  // Release (or drag off / cancel): cut the sound immediately.
+  function userRelease() {
+    stopSound(userSourceRef.current);
+    userSourceRef.current = null;
   }
 
   function toggleSound() {
@@ -176,7 +188,8 @@ function Board() {
           <Button
             key={id}
             type={id}
-            onClick={() => userSays(id)}
+            onPressStart={() => userPress(id)}
+            onPressEnd={userRelease}
             clicked={clicked === id}
           />
         ))}
@@ -205,17 +218,6 @@ function Board() {
             aria-pressed={soundOn}
             aria-label="Toggle sound"
           />
-          {[1, 2, 3, 4].map((id) => (
-            <audio
-              key={id}
-              id={`simon${id}`}
-              ref={(el) => {
-                audioRefs.current[id] = el;
-              }}
-            >
-              <source src={sounds[id]} type="audio/mpeg" />
-            </audio>
-          ))}
         </div>
       </div>
     </>
