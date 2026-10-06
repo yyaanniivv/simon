@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer, useRef } from 'react';
 import cn from 'classnames';
 
 import Button from './Button';
@@ -10,6 +10,8 @@ import sound4 from './sounds/simonSound4.mp3';
 const USER = 'user';
 const SIMON = 'simon';
 const FAILURE = 'failure';
+
+const sounds = { 1: sound1, 2: sound2, 3: sound3, 4: sound4 };
 
 const SOUND_PREF_KEY = 'simon:soundOn';
 
@@ -31,8 +33,6 @@ const initialState = { topScore: 0, player: SIMON, userScore: 0, simonClicks: []
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'setTopScore':
-      return { ...state, topScore: action.payload };
     case 'setUserScore':
       return {
         ...state,
@@ -45,12 +45,32 @@ function reducer(state, action) {
         simonClicks: action.payload,
         player: SIMON,
       };
-    case 'reset':
-      return { ...state, player: FAILURE, userScore: 0, simonClicks: [] }; //TODO initialState (init) funciton with TopScore/FAILURE as param?
+    case 'userClick': {
+      const { index } = action.payload;
+      if (index !== state.simonClicks[state.userScore]) {
+        // Wrong move: record the high score (completed rounds = clicks - 1) and fail
+        const numberOfMoves = state.simonClicks.length - 1;
+        return {
+          ...state,
+          player: FAILURE,
+          userScore: 0,
+          simonClicks: [],
+          topScore: Math.max(state.topScore, numberOfMoves),
+        };
+      }
+      return { ...state, userScore: state.userScore + 1, player: USER };
+    }
     default:
       console.log('Undefined action:', JSON.stringify(action));
       throw new Error('Undefined action');
   }
+}
+
+// Exported for unit tests (PR C will move this into its own module)
+export { reducer, initialState, timer, timerSimon, timerChangePlayerTurn };
+
+function randomMove() {
+  return Math.floor(Math.random() * 4 + 1);
 }
 
 function Board() {
@@ -58,64 +78,85 @@ function Board() {
   const [clicked, setClicked] = useState(0);
   const [soundOn, setSoundOn] = useState(readSoundPref);
 
-  // Using a named function, to add some context and better explain which effect this is.
-  useEffect(deselectButton);
-
-  function deselectButton() {
-    playSound(clicked);
-    setTimeout(() => setClicked(0), timer);
-  }
-
-  useEffect(() => {
-    if (state.simonClicks.length > 0) {
-      let i = 0;
-      const intervalId = setInterval(() => {
-        setClicked(state.simonClicks[i]);
-        i++;
-        if (i >= state.simonClicks.length) {
-          clearInterval(intervalId);
-          setTimeout(() => {
-            dispatch({ type: 'setUserScore', payload: 0 });
-          }, timerChangePlayerTurn);
-        }
-      }, timerSimon);
-    }
-  }, [state.simonClicks]);
-
-  function simonSays() {
-    const next = Math.floor(Math.random() * 4 + 1);
-    dispatch({ type: 'setSimonClicks', payload: state.simonClicks.concat(next) });
-  }
-
-  function userSays(index) {
-    setClicked(index);
-
-    if (index !== state.simonClicks[state.userScore]) {
-      reset();
-    } else {
-      dispatch({ type: 'setUserScore', payload: state.userScore + 1 });
-
-      if (state.userScore + 1 === state.simonClicks.length) {
-        setTimeout(() => {
-          simonSays();
-        }, timerChangePlayerTurn);
-      }
-    }
-  }
+  const audioRefs = useRef({});
+  // Lets the click effect read the latest soundOn without re-running (and replaying
+  // the sound) when the toggle changes mid-highlight.
+  const soundOnRef = useRef(soundOn);
+  soundOnRef.current = soundOn;
 
   function playSound(type) {
-    // type 0 means "nothing clicked" - the deselect effect runs with it on every render
-    if (!soundOn || !type) {
-      return;
-    }
-    const audio = document.getElementById(`simon${type}`);
-    if (!audio) {
+    // type 0 means "nothing clicked"
+    const audio = audioRefs.current[type];
+    if (!soundOnRef.current || !type || !audio) {
       return;
     }
     const played = audio.play();
     if (played && typeof played.catch === 'function') {
       played.catch(() => {}); // ignore interrupted/blocked plays
     }
+  }
+
+  // Highlight the clicked button (with sound), then deselect it after a beat.
+  useEffect(() => {
+    if (!clicked) {
+      return;
+    }
+    playSound(clicked);
+    const timeoutId = setTimeout(() => setClicked(0), timer);
+    return () => clearTimeout(timeoutId);
+  }, [clicked]);
+
+  // Play Simon's sequence, then hand the turn over to the user.
+  useEffect(() => {
+    if (state.simonClicks.length === 0) {
+      return;
+    }
+    let i = 0;
+    let timeoutId;
+    const intervalId = setInterval(() => {
+      setClicked(state.simonClicks[i]);
+      i++;
+      if (i >= state.simonClicks.length) {
+        clearInterval(intervalId);
+        timeoutId = setTimeout(() => {
+          dispatch({ type: 'setUserScore', payload: 0 });
+        }, timerChangePlayerTurn);
+      }
+    }, timerSimon);
+    return () => {
+      clearInterval(intervalId);
+      clearTimeout(timeoutId);
+    };
+  }, [state.simonClicks]);
+
+  // The user repeated the whole sequence - Simon adds the next move after a pause.
+  useEffect(() => {
+    const sequenceComplete =
+      state.player === USER &&
+      state.simonClicks.length > 0 &&
+      state.userScore === state.simonClicks.length;
+    if (!sequenceComplete) {
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      dispatch({
+        type: 'setSimonClicks',
+        payload: state.simonClicks.concat(randomMove()),
+      });
+    }, timerChangePlayerTurn);
+    return () => clearTimeout(timeoutId);
+  }, [state.player, state.userScore, state.simonClicks]);
+
+  function simonSays() {
+    dispatch({
+      type: 'setSimonClicks',
+      payload: state.simonClicks.concat(randomMove()),
+    });
+  }
+
+  function userSays(index) {
+    setClicked(index);
+    dispatch({ type: 'userClick', payload: { index } });
   }
 
   function toggleSound() {
@@ -128,20 +169,12 @@ function Board() {
     }
   }
 
-  function reset() {
-    const numberOfMoves = state.simonClicks.length - 1;
-    if (numberOfMoves > state.topScore) {
-      dispatch({ type: 'setTopScore', payload: numberOfMoves });
-    }
-    dispatch({ type: 'reset' }); // TODO: should the reset calculate the topScore?
-  }
-
   return (
     <>
       <div className="Board">
         {[1, 2, 3, 4].map((id) => (
           <Button
-            key={id + clicked + state.player}
+            key={id}
             type={id}
             onClick={() => userSays(id)}
             clicked={clicked === id}
@@ -172,18 +205,17 @@ function Board() {
             aria-pressed={soundOn}
             aria-label="Toggle sound"
           />
-          <audio id="simon1">
-            <source src={sound1} type="audio/mpeg" />
-          </audio>
-          <audio id="simon2">
-            <source src={sound2} type="audio/mpeg" />
-          </audio>
-          <audio id="simon3">
-            <source src={sound3} type="audio/mpeg" />
-          </audio>
-          <audio id="simon4">
-            <source src={sound4} type="audio/mpeg" />
-          </audio>
+          {[1, 2, 3, 4].map((id) => (
+            <audio
+              key={id}
+              id={`simon${id}`}
+              ref={(el) => {
+                audioRefs.current[id] = el;
+              }}
+            >
+              <source src={sounds[id]} type="audio/mpeg" />
+            </audio>
+          ))}
         </div>
       </div>
     </>
