@@ -25,6 +25,9 @@ Use `npm run test:watch` for watch mode.
 
 Builds the app for production into the `dist/` folder.
 
-### `npm run deploy`
+## Deployment
 
-Builds and deploys the game to its github.io page.
+Merges to `main` are built and deployed to https://yyaanniivv.github.io/simon/
+automatically by the [Deploy to GitHub Pages workflow](.github/workflows/deploy.yml).
+Pull requests run tests + build via the [CI workflow](.github/workflows/ci.yml).
+No manual deploy step is needed.
