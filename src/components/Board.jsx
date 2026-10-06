@@ -3,10 +3,10 @@ import cn from 'classnames';
 
 import Button from './Button';
 import { initSounds, playSound as startSound, stopSound } from './audio';
-import sound1 from './sounds/simonSound1.mp3';
-import sound2 from './sounds/simonSound2.mp3';
-import sound3 from './sounds/simonSound3.mp3';
-import sound4 from './sounds/simonSound4.mp3';
+import sound1 from './sounds/simonSound1.wav';
+import sound2 from './sounds/simonSound2.wav';
+import sound3 from './sounds/simonSound3.wav';
+import sound4 from './sounds/simonSound4.wav';
 
 const USER = 'user';
 const SIMON = 'simon';
@@ -25,7 +25,7 @@ function readSoundPref() {
   }
 }
 
-// The sounds are not the same length - so we need to support the longest sound (4/blue)
+// Simon's playback window must cover the longest sound (~300ms after trimming silence)
 const timer = 200;
 const timerSimon = 450;
 const timerChangePlayerTurn = 600;
