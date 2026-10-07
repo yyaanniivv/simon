@@ -155,28 +155,25 @@ function Board() {
       <div className="score">
         Score {state.simonClicks.length ? state.simonClicks.length - 1 : 0}
       </div>
-      <div>High Score: {state.topScore}</div>
+      <div className="high-score">High Score: {state.topScore}</div>
       <div className="controls">
-        <div className="start" onClick={simonSays} />
+        <button className="start" onClick={simonSays} aria-label="Start game" />
         <div className="turn">
-          Turn: <div className={`${state.player}-icon`} />
+          <span>Turn</span>
+          <div className={`turn-icon ${state.player}-icon`} aria-hidden="true" />
         </div>
-        <div className="sound">
-          <div
-            className={cn({ mute: !soundOn, speaker: soundOn })}
-            onClick={toggleSound}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                toggleSound();
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-pressed={soundOn}
-            aria-label="Toggle sound"
-          />
-        </div>
+        <button
+          className={cn('sound-toggle', { mute: !soundOn, speaker: soundOn })}
+          onClick={toggleSound}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              toggleSound();
+            }
+          }}
+          aria-pressed={soundOn}
+          aria-label="Toggle sound"
+        />
       </div>
     </>
   );
