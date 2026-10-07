@@ -6,6 +6,7 @@
   padding: 16px;
   box-sizing: border-box;
   touch-action: manipulation;
+  overflow-x: hidden; /* prevent horizontal scroll on tiny screens */
 }
 
 /* Board: 2x2 grid that scales with container */
@@ -15,6 +16,7 @@
   grid-template-rows: 1fr 1fr;
   gap: 8px;
   aspect-ratio: 1 / 1;
+  width: 100%;
   max-width: 448px;
   margin: 0 auto;
 }
@@ -29,6 +31,8 @@
   margin-top: 16px;
   padding: 0 8px;
   min-width: 0; /* allow shrinking below content size */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .start,
@@ -149,6 +153,39 @@
   .turn-icon {
     flex: 0 0 28px;
     height: 28px;
+  }
+}
+
+@media (max-width: 320px) {
+  .App {
+    padding: 4px;
+  }
+  .Board {
+    gap: 3px;
+  }
+  .controls {
+    gap: 4px;
+    padding: 0 4px;
+    margin-top: 10px;
+  }
+  .start,
+  .sound-toggle {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    background-size: 85%;
+  }
+  .turn-icon {
+    flex: 0 0 24px;
+    height: 24px;
+  }
+  .score {
+    font-size: 16px;
+    margin: 8px 0 2px;
+  }
+  .high-score {
+    font-size: 11px;
+    margin-bottom: 4px;
   }
 }
 
