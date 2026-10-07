@@ -7,7 +7,7 @@ import { playSound } from './audio';
 
 vi.mock('./audio', () => ({
   initSounds: vi.fn(() => Promise.resolve()),
-  playSound: vi.fn(() => ({ node: 'mock-source' })),
+  playSound: vi.fn(() => ({ stop: vi.fn() })),
   stopSound: vi.fn(),
 }));
 
@@ -42,7 +42,7 @@ describe('Board (gameplay)', () => {
     await user.click(document.querySelector('.button.red'));
 
     expect(playSound).toHaveBeenCalledTimes(1);
-    expect(playSound).toHaveBeenCalledWith(1);
+    expect(playSound).toHaveBeenCalledWith(1, expect.any(Object));
   });
 
   it('simon plays the first move after start', async () => {
@@ -60,7 +60,7 @@ describe('Board (gameplay)', () => {
     expect(document.querySelectorAll(CLICKED_CLASSES)).toHaveLength(1);
     expect(document.querySelector('.red-clicked')).not.toBeNull();
     // the sound starts on the tick itself - no render/effect round-trip
-    expect(playSound).toHaveBeenCalledWith(1);
+    expect(playSound).toHaveBeenCalledWith(1, expect.any(Object));
   });
 
   it('plays a full round: simon shows a move, the user repeats it, score advances', async () => {

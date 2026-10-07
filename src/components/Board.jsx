@@ -72,7 +72,7 @@ function Board() {
       const move = state.simonClicks[i];
       setClicked(move);
       if (soundOnRef.current) {
-        startSound(move); // Simon's sounds play in full - no stop
+        startSound(move, sounds); // Simon's sounds play in full - no stop
       }
       i++;
       if (i >= state.simonClicks.length) {
@@ -119,13 +119,17 @@ function Board() {
   function userPress(index) {
     setClicked(index);
     dispatch({ type: 'userClick', payload: { index } });
-    stopSound(userSourceRef.current);
-    userSourceRef.current = soundOnRef.current ? startSound(index) : null;
+    if (userSourceRef.current) {
+      userSourceRef.current.stop();
+    }
+    userSourceRef.current = soundOnRef.current ? startSound(index, sounds) : { stop: () => {} };
   }
 
   // Release (or drag off / cancel): cut the sound immediately.
   function userRelease() {
-    stopSound(userSourceRef.current);
+    if (userSourceRef.current) {
+      userSourceRef.current.stop();
+    }
     userSourceRef.current = null;
   }
 
