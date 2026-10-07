@@ -4,61 +4,77 @@
   border-width: 10px;
   border-style: solid;
 
-  width: 200px;
-  height: 200px;
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
 }
 
-:root {
-  --radius: 250px;
+/* Size: 200px on desktop, scales mobile via App.css */
+@media (min-width: 480px) {
+  .button {
+    width: 200px;
+    height: 200px;
+  }
 }
 
-.top-left {
-  border-top-left-radius: var(--radius);
-}
-.top-right {
-  border-top-right-radius: var(--radius);
-}
-.bottom-left {
-  border-bottom-left-radius: var(--radius);
-}
-.bottom-right {
-  border-bottom-right-radius: var(--radius);
+@media (max-width: 479px) {
+  .button {
+    width: calc(25% - 8px);
+    height: calc(25% - 8px);
+    border-width: 8px;
+  }
 }
 
-/* Colors */
+/* Color palette with better contrast */
+/* Red */
+.red {
+  background: linear-gradient(270deg, #e74c3c, #f39c12);
+}
 
-/* Can also work - but will need a syntetic event/click */
-/* .red:active {
-  background-color: #fdb0b0;
-} */
+/* Yellow */
+.yellow {
+  background: linear-gradient(270deg, #f1c40f, #f39c12);
+}
 
+/* Green */
+.green {
+  background: linear-gradient(270deg, #2ecc71, #27ae60);
+}
+
+/* Blue */
+.blue {
+  background: linear-gradient(270deg, #3498db, #2980b9);
+}
+
+/* Active/pressed state - slightly darker */
+.button:active {
+  transform: scale(0.98);
+  transition: transform 50ms ease-in;
+}
+
+/* Clicked (after press-release) state with better visibility */
 .red-clicked {
   background-color: #fdb0b0;
-}
-
-.red {
-  /* background-color: #de2d3c; */
-  background: linear-gradient(270deg, #de2d3c, #fdb0b0);
-  animation: AnimationName 1s ease-out;
+  transition: background-color 150ms ease-out;
 }
 
 .yellow-clicked {
-  background-color: rgb(255, 255, 221);
-}
-.yellow {
-  background-color: rgb(233, 233, 12);
+  background-color: #fdcb6e;
+  transition: background-color 150ms ease-out;
 }
 
 .green-clicked {
-  background-color: rgb(203, 255, 203);
-}
-.green {
-  background-color: rgb(26, 201, 26);
+  background-color: #2ecc71;
+  transition: background-color 150ms ease-out;
 }
 
 .blue-clicked {
-  background-color: rgb(211, 230, 255);
+  background-color: #3498db;
+  transition: background-color 150ms ease-out;
 }
-.blue {
-  background-color: rgb(22, 112, 230);
+
+/* Focus state for keyboard accessibility */
+.button:focus-visible {
+  outline: 3px solid #e84393;
+  outline-offset: 4px;
 }
