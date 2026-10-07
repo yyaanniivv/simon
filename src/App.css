@@ -28,19 +28,22 @@
   gap: 12px;
   margin-top: 16px;
   padding: 0 8px;
+  min-width: 0; /* allow shrinking below content size */
 }
 
 .start,
 .sound-toggle {
   flex: 0 0 56px;
+  width: 56px;
   height: 56px;
-  background-size: 60%;
+  background-size: 70%;
   background-repeat: no-repeat;
   background-position: center;
   border: none;
   background-color: transparent;
   cursor: pointer;
   padding: 0;
+  line-height: 0; /* prevent button text baseline issues */
 }
 
 .start {
@@ -56,6 +59,7 @@
 
 .turn {
   flex: 1;
+  min-width: 0; /* allow shrinking */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,6 +67,9 @@
   font-size: clamp(14px, 3vw, 18px);
   font-weight: 600;
   color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .turn-icon {
@@ -112,7 +119,9 @@
   .start,
   .sound-toggle {
     flex: 0 0 48px;
+    width: 48px;
     height: 48px;
+    background-size: 75%;
   }
   .turn-icon {
     flex: 0 0 32px;
@@ -133,8 +142,9 @@
   .start,
   .sound-toggle {
     flex: 0 0 40px;
+    width: 40px;
     height: 40px;
-    background-size: 55%;
+    background-size: 80%;
   }
   .turn-icon {
     flex: 0 0 28px;
@@ -153,11 +163,14 @@
   }
   .controls {
     margin-top: 8px;
+    gap: 8px;
   }
   .start,
   .sound-toggle {
     flex: 0 0 40px;
+    width: 40px;
     height: 40px;
+    background-size: 80%;
   }
   .turn-icon {
     flex: 0 0 28px;
