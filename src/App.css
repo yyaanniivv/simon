@@ -9,16 +9,21 @@
   overflow-x: hidden; /* prevent horizontal scroll on tiny screens */
 }
 
-/* Board: 2x2 grid that scales with container */
+/* Board: circular 2x2 grid like original Simon */
 .Board {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 8px;
+  gap: 0;
   aspect-ratio: 1 / 1;
   width: 100%;
   max-width: 448px;
   margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 8px solid #1a1a1a;
+  box-sizing: border-box;
+  background: #1a1a1a; /* cross separator color */
 }
 
 /* Controls: responsive flex layout */
