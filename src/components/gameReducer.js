@@ -1,6 +1,3 @@
-// Game logic reducer and sequence generation — pure functions, no React deps.
-// Extracted from Board.jsx for isolated unit testing.
-
 export const USER = 'user';
 export const SIMON = 'simon';
 export const FAILURE = 'failure';
