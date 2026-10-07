@@ -7,10 +7,17 @@ import sound1 from './sounds/simonSound1.wav';
 import sound2 from './sounds/simonSound2.wav';
 import sound3 from './sounds/simonSound3.wav';
 import sound4 from './sounds/simonSound4.wav';
-
-const USER = 'user';
-const SIMON = 'simon';
-const FAILURE = 'failure';
+import {
+  reducer,
+  initialState,
+  timer,
+  timerSimon,
+  timerChangePlayerTurn,
+  randomMove,
+  USER,
+  SIMON,
+  FAILURE,
+} from './gameReducer';
 
 const sounds = { 1: sound1, 2: sound2, 3: sound3, 4: sound4 };
 
@@ -23,55 +30,6 @@ function readSoundPref() {
   } catch {
     return false; // localStorage unavailable (e.g. private browsing)
   }
-}
-
-// Simon's playback window must cover the longest sound (~300ms after trimming silence)
-const timer = 200;
-const timerSimon = 450;
-const timerChangePlayerTurn = 600;
-
-const initialState = { topScore: 0, player: SIMON, userScore: 0, simonClicks: [] };
-
-function reducer(state, action) {
-  switch (action.type) {
-    case 'setUserScore':
-      return {
-        ...state,
-        userScore: action.payload,
-        player: USER,
-      };
-    case 'setSimonClicks':
-      return {
-        ...state,
-        simonClicks: action.payload,
-        player: SIMON,
-      };
-    case 'userClick': {
-      const { index } = action.payload;
-      if (index !== state.simonClicks[state.userScore]) {
-        // Wrong move: record the high score (completed rounds = clicks - 1) and fail
-        const numberOfMoves = state.simonClicks.length - 1;
-        return {
-          ...state,
-          player: FAILURE,
-          userScore: 0,
-          simonClicks: [],
-          topScore: Math.max(state.topScore, numberOfMoves),
-        };
-      }
-      return { ...state, userScore: state.userScore + 1, player: USER };
-    }
-    default:
-      console.log('Undefined action:', JSON.stringify(action));
-      throw new Error('Undefined action');
-  }
-}
-
-// Exported for unit tests (PR C will move this into its own module)
-export { reducer, initialState, timer, timerSimon, timerChangePlayerTurn };
-
-function randomMove() {
-  return Math.floor(Math.random() * 4 + 1);
 }
 
 function Board() {
