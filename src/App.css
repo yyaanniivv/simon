@@ -1,102 +1,229 @@
 .App {
   text-align: center;
-  width: 480px;
-
-  touch-action: manipulation; /* Disable mobile double-tap*/
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  overflow-x: hidden; /* prevent horizontal scroll on tiny screens */
 }
 
-/*Alt: https://stackoverflow.com/questions/16263358/quarter-of-a-ring-with-css-and-html */
+/* Board: circular 2x2 grid like original Simon */
 .Board {
-  margin: 10px;
-  display: flex;
-  flex-flow: row wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 448px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 8px solid #1a1a1a;
+  box-sizing: border-box;
+  background: #1a1a1a; /* cross separator color */
 }
 
+/* Controls: responsive flex layout */
 .controls {
-  /* margin-top: 30px; */
   display: flex;
   flex-direction: row;
-  align-content: space-between;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 0 8px;
+  min-width: 0; /* allow shrinking below content size */
+  width: 100%;
+  box-sizing: border-box;
 }
+
+.start,
+.sound-toggle {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  background-size: 70%;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0; /* prevent button text baseline issues */
+}
+
 .start {
-  background: url('./play-icon.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 50px;
-  width: 50px;
-  flex: 1;
+  background-image: url('./play-icon.svg');
 }
-.sound {
-  flex: 1;
+
+.sound-toggle.mute {
+  background-image: url('./mute-icon.svg');
 }
-.mute {
-  background: url('./mute-icon.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 50px;
-}
-.speaker {
-  background: url('./speaker-icon.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 50px;
+.sound-toggle.speaker {
+  background-image: url('./speaker-icon.svg');
 }
 
 .turn {
-  flex: 2;
-}
-.user-icon {
-  background: url('./user-icon.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 50px;
-}
-.simon-icon {
-  background: url('./simon-icon.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 50px;
-}
-.failure-icon {
-  background: url('./failure-icon.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 50px;
-}
-
-/* ====== Original react app ====== */
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
-  pointer-events: none;
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  flex: 1;
+  min-width: 0; /* allow shrinking */
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 8px;
+  font-size: clamp(14px, 3vw, 18px);
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.App-link {
-  color: #61dafb;
+.turn-icon {
+  flex: 0 0 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.turn-icon.user-icon {
+  background-image: url('./user-icon.svg');
+}
+.turn-icon.simon-icon {
+  background-image: url('./simon-icon.svg');
+}
+.turn-icon.failure-icon {
+  background-image: url('./failure-icon.svg');
+}
+
+/* Score display */
+.score {
+  font-size: clamp(16px, 4vw, 24px);
+  font-weight: 700;
+  margin: 12px 0 4px;
+  color: #222;
+}
+
+.high-score {
+  font-size: clamp(12px, 2.5vw, 16px);
+  color: #666;
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .App {
+    padding: 12px;
   }
-  to {
-    transform: rotate(360deg);
+  .Board {
+    gap: 6px;
+  }
+  .controls {
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .start,
+  .sound-toggle {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    background-size: 75%;
+  }
+  .turn-icon {
+    flex: 0 0 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 360px) {
+  .App {
+    padding: 8px;
+  }
+  .Board {
+    gap: 4px;
+  }
+  .controls {
+    gap: 6px;
+  }
+  .start,
+  .sound-toggle {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    background-size: 80%;
+  }
+  .turn-icon {
+    flex: 0 0 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 320px) {
+  .App {
+    padding: 4px;
+  }
+  .Board {
+    gap: 3px;
+  }
+  .controls {
+    gap: 4px;
+    padding: 0 4px;
+    margin-top: 10px;
+  }
+  .start,
+  .sound-toggle {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    background-size: 85%;
+  }
+  .turn-icon {
+    flex: 0 0 24px;
+    height: 24px;
+  }
+  .score {
+    font-size: 16px;
+    margin: 8px 0 2px;
+  }
+  .high-score {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+}
+
+/* Landscape phones: constrain height */
+@media (max-height: 500px) and (orientation: landscape) {
+  .App {
+    padding: 8px;
+  }
+  .Board {
+    max-width: 320px;
+    gap: 4px;
+  }
+  .controls {
+    margin-top: 8px;
+    gap: 8px;
+  }
+  .start,
+  .sound-toggle {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    background-size: 80%;
+  }
+  .turn-icon {
+    flex: 0 0 28px;
+    height: 28px;
+  }
+  .score {
+    font-size: 18px;
+    margin: 8px 0 2px;
+  }
+  .high-score {
+    font-size: 12px;
+    margin-bottom: 4px;
   }
 }
