@@ -1,13 +1,8 @@
 import React, { act } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Board, {
-  reducer,
-  initialState,
-  timer,
-  timerSimon,
-  timerChangePlayerTurn,
-} from './Board';
+import Board from './Board';
+import { timer, timerSimon, timerChangePlayerTurn } from './gameReducer';
 import { playSound } from './audio';
 
 vi.mock('./audio', () => ({
@@ -26,46 +21,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
-});
-
-describe('reducer (game rules)', () => {
-  const gameInProgress = {
-    topScore: 2,
-    player: 'user',
-    userScore: 1,
-    simonClicks: [1, 2, 3],
-  };
-
-  it('advances the score on a correct click', () => {
-    const next = reducer(gameInProgress, { type: 'userClick', payload: { index: 2 } });
-    expect(next.userScore).toBe(2);
-    expect(next.player).toBe('user');
-    expect(next.simonClicks).toEqual([1, 2, 3]);
-  });
-
-  it('fails, clears the round and records the high score on a wrong click', () => {
-    const next = reducer(gameInProgress, { type: 'userClick', payload: { index: 4 } });
-    expect(next.player).toBe('failure');
-    expect(next.userScore).toBe(0);
-    expect(next.simonClicks).toEqual([]);
-    // completed rounds = simonClicks.length - 1 = 2, ties existing topScore
-    expect(next.topScore).toBe(2);
-  });
-
-  it('raises the high score but never lowers it', () => {
-    const deepRun = { ...gameInProgress, topScore: 0, simonClicks: [1, 2, 3, 4, 5] };
-    const next = reducer(deepRun, { type: 'userClick', payload: { index: 9 } });
-    expect(next.topScore).toBe(4);
-  });
-
-  it('setSimonClicks hands the turn to simon, setUserScore to the user', () => {
-    expect(reducer(initialState, { type: 'setSimonClicks', payload: [1] }).player).toBe('simon');
-    expect(reducer(initialState, { type: 'setUserScore', payload: 0 }).player).toBe('user');
-  });
-
-  it('throws on an undefined action', () => {
-    expect(() => reducer(initialState, { type: 'nope' })).toThrow('Undefined action');
-  });
 });
 
 describe('Board (gameplay)', () => {
