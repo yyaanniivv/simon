@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import Board from './Board';
 import { initSounds, playSound, stopSound } from './audio';
 
-// The engine itself is tested in audio.test.js - here we only verify that
-// Board triggers it at the right moments (press, release, mute gating).
+// playSound is now synchronous and returns { stop: fn }
+const mockController = { stop: vi.fn() };
 vi.mock('./audio', () => ({
   initSounds: vi.fn(() => Promise.resolve()),
-  playSound: vi.fn(() => ({ node: 'mock-source' })),
+  playSound: vi.fn(() => mockController),
   stopSound: vi.fn(),
 }));
 
@@ -16,7 +16,6 @@ const SOUND_PREF_KEY = 'simon:soundOn';
 
 const getToggle = () => screen.getByRole('button', { name: 'Toggle sound' });
 const getGameButton = (color) => document.querySelector(`.button.${color}`);
-const lastSource = () => playSound.mock.results.at(-1).value;
 
 beforeEach(() => {
   localStorage.clear();
@@ -101,11 +100,12 @@ describe('sound playback (press & release)', () => {
     const red = getGameButton('red');
 
     fireEvent.pointerDown(red);
+    // playSound is now synchronous
     expect(playSound).toHaveBeenCalledTimes(1);
-    expect(playSound).toHaveBeenCalledWith(1);
+    expect(playSound).toHaveBeenCalledWith(1, expect.any(Object));
 
     fireEvent.pointerUp(red);
-    expect(stopSound).toHaveBeenCalledWith(lastSource());
+    expect(mockController.stop).toHaveBeenCalledTimes(1);
   });
 
   it('stops the sound when the pointer is dragged off the button', () => {
@@ -116,7 +116,7 @@ describe('sound playback (press & release)', () => {
     fireEvent.pointerDown(red);
     fireEvent.pointerLeave(red);
 
-    expect(stopSound).toHaveBeenCalledWith(lastSource());
+    expect(mockController.stop).toHaveBeenCalledTimes(1);
   });
 
   it('starts the second press immediately, without waiting for the first sound', () => {
@@ -126,12 +126,11 @@ describe('sound playback (press & release)', () => {
     // Press red, then press yellow while red is still held - the second
     // sound must start right away (this is the "queued sounds" bug).
     fireEvent.pointerDown(getGameButton('red'));
-    const firstSource = lastSource();
     fireEvent.pointerDown(getGameButton('yellow'));
 
-    expect(playSound).toHaveBeenNthCalledWith(1, 1);
-    expect(playSound).toHaveBeenNthCalledWith(2, 2);
+    expect(playSound).toHaveBeenNthCalledWith(1, 1, expect.any(Object));
+    expect(playSound).toHaveBeenNthCalledWith(2, 2, expect.any(Object));
     // the still-held first sound is cut so the two do not pile up
-    expect(stopSound).toHaveBeenCalledWith(firstSource);
+    expect(mockController.stop).toHaveBeenCalledTimes(1);
   });
 });
