@@ -22,6 +22,7 @@ import {
 const sounds = { 1: sound1, 2: sound2, 3: sound3, 4: sound4 };
 
 const SOUND_PREF_KEY = 'simon:soundOn';
+const HIGH_SCORE_KEY = 'simon:highScore';
 
 // Sound starts OFF (muted); the user opts in and the choice is remembered.
 function readSoundPref() {
@@ -32,8 +33,27 @@ function readSoundPref() {
   }
 }
 
+// Read the persisted high score; defaults to 0 if missing, invalid, or NaN.
+function readHighScore() {
+  try {
+    const stored = window.localStorage.getItem(HIGH_SCORE_KEY);
+    const parsed = stored ? parseInt(stored, 10) : 0;
+    return Number.isNaN(parsed) ? 0 : parsed;
+  } catch {
+    return 0;
+  }
+}
+
+// Lazy initializer for useReducer - reads high score once on mount.
+function getInitialState() {
+  return {
+    ...initialState,
+    topScore: readHighScore(),
+  };
+}
+
 function Board() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, null, getInitialState);
   const [clicked, setClicked] = useState(0);
   const [soundOn, setSoundOn] = useState(readSoundPref);
 
@@ -105,6 +125,17 @@ function Board() {
     }, timerChangePlayerTurn);
     return () => clearTimeout(timeoutId);
   }, [state.player, state.userScore, state.simonClicks]);
+
+  // Persist high score to localStorage when it changes (skip initial 0 from lazy init).
+  useEffect(() => {
+    if (state.topScore > 0) {
+      try {
+        window.localStorage.setItem(HIGH_SCORE_KEY, String(state.topScore));
+      } catch {
+        // ignore write failures (e.g. private browsing) - high score still works in-session
+      }
+    }
+  }, [state.topScore]);
 
   function simonSays() {
     dispatch({
