@@ -2,6 +2,7 @@ import React, { useState, useEffect, useReducer, useRef } from 'react';
 import cn from 'classnames';
 
 import Button from './Button';
+import InstallPrompt from './InstallPrompt';
 import { initSounds, playSound as startSound, stopSound } from './audio';
 import sound1 from './sounds/simonSound1.wav';
 import sound2 from './sounds/simonSound2.wav';
@@ -210,6 +211,7 @@ function Board() {
           aria-label="Toggle sound"
         />
       </div>
+      <InstallPrompt />
     </>
   );
 }
